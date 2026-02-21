@@ -1,4 +1,3 @@
-
 ---
 
 # 🎙️ Real-Time Voice AI System (Low Latency)
@@ -6,6 +5,10 @@
 A full-duplex, streaming voice assistant prototype designed for natural human-computer interaction. This system features an ultra-low latency pipeline converting Speech-to-Text (STT), generating AI responses (LLM), and synthesizing Text-to-Speech (TTS) in near real-time.
 
 It includes advanced features like conversational fillers to mask latency, chunk-based streaming TTS, and local Voice Activity Detection (VAD) for instant barge-in (interruption).
+
+Here is a look at the real-time voice assistant dashboard :
+
+![Voice AI Dashboard UI](./assets/stt2.png)
 
 ## 🚀 Key Features
 
@@ -142,12 +145,12 @@ To scale this system for 10,000 simultaneous users, the current monolithic state
 
 _Note: These metrics are tracked dynamically in the application UI. The following represents average benchmark targets achieved during testing._
 
-| Processing Stage    | Target Latency | Description                                                                   |
-| ------------------- | -------------- | ----------------------------------------------------------------------------- |
-| **STT (Whisper)**   | ~300 - 700ms   | Time taken to transcribe the accumulated audio buffer via Groq API.           |
-| **LLM TTFT**        | ~400 - 600ms   | Time to First Token (TTFT). Fast inference via Llama 3 on Groq.               |
-| **TTS First Chunk** | ~500 - 10000ms  | Time to synthesize the first sentence chunk via Kokoro (CPU bound).           |
-| **Total E2E**       | **< 2000-2500ms**   | Total time from the user stopping speech to the first byte of audio playback. |
+| Processing Stage    | Target Latency    | Description                                                                   |
+| ------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| **STT (Whisper)**   | ~300 - 700ms      | Time taken to transcribe the accumulated audio buffer via Groq API.           |
+| **LLM TTFT**        | ~400 - 600ms      | Time to First Token (TTFT). Fast inference via Llama 3 on Groq.               |
+| **TTS First Chunk** | ~500 - 10000ms    | Time to synthesize the first sentence chunk via Kokoro (CPU bound).           |
+| **Total E2E**       | **< 2000-2500ms** | Total time from the user stopping speech to the first byte of audio playback. |
 
 _To further reduce perceived latency, the system immediately plays a synthesized filler word ("Hmm...") while the LLM generates the factual response, dropping perceived E2E latency to < 800ms._
 
