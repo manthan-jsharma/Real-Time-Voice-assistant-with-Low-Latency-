@@ -11,9 +11,10 @@ Here is a look at the real-time voice assistant dashboard:
 ## 🚀 Key Features
 
 - **Real-Time Streaming:** End-to-end WebSocket architecture for continuous bidirectional audio streaming.
-- **Natural Conversation:** Injects natural filler words ("Hmm...", "Let me think...") while the LLM generates the primary response to eliminate perceived dead air.
+- **Natural Conversation:** fine tuning with ("Hmm...", "Let me think...") while the LLM generates the primary response to eliminate perceived dead air.
 - **Barge-In Support:** Client-side volume-based VAD allows users to interrupt the AI mid-sentence, instantly halting audio playback and cancelling backend LLM/TTS generation tasks.
 - **Dynamic Telemetry:** Frontend UI tracks and displays real-time latency metrics and live cost estimation.
+- **Hallucniation filters:** during testing whisper model was hallucinating with AI responses and interuppting with phantom works like "Yeah", "Thank You", i had filterd them
 
 ---
 
