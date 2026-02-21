@@ -6,9 +6,9 @@ A full-duplex, streaming voice assistant prototype designed for natural human-co
 
 It includes advanced features like conversational fillers to mask latency, chunk-based streaming TTS, and local Voice Activity Detection (VAD) for instant barge-in (interruption).
 
-Here is a look at the real-time voice assistant dashboard :
+Here is a look at the real-time voice assistant dashboard:
 
-![Voice AI Dashboard UI](./assets/stt2.png)
+[Voice AI Dashboard UI](./assets/stt2.png)
 
 ## 🚀 Key Features
 
