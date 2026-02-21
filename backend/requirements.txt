@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+websockets
+av==12.1.0 --only-binary=:all:
+faster-whisper
+kokoro>=0.7.16
+groq
+numpy
