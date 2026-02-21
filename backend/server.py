@@ -108,11 +108,11 @@ class VoiceSession:
                             self.interrupt_flag = False 
                             
                            
-                            fillers = ["Hmm...", "Let me think.", "Well...", "Right..", "Okay!!"]
-                            filler = random.choice(fillers)
+                            # fillers = ["Hmm...", "Let me think.", "Well...", "Right..", "Okay!!"]
+                            # filler = random.choice(fillers)
                             
                           
-                            await self.ws.send_json({"type": "text_chunk", "text": f"_{filler}_ "})
+                            # await self.ws.send_json({"type": "text_chunk", "text": f"_{filler}_ "})
                             
                             asyncio.create_task(self.process_tts(filler))
                             
@@ -128,7 +128,10 @@ class VoiceSession:
             llm_start = time.perf_counter()
             stream = await llm_client.chat.completions.create(
                 messages=[
-                    {"role": "system", "content": "You are a voice assistant. Reply in one or two short, natural sentences only."},
+                    {
+                        "role": "system", 
+                        "content": "You are a conversational human-like voice assistant. Always start your response with a natural filler phrase like 'Hmm...', 'Well...', or 'Let me think...', followed by a short, natural answer. Do not use markdown like asterisks."
+                    },
                     {"role": "user", "content": prompt}
                 ],
                 model="llama-3.3-70b-versatile",
@@ -154,12 +157,14 @@ class VoiceSession:
                         
                     await self.ws.send_json({"type": "text_chunk", "text": text_chunk})
                     
-                    if any(punct in text_chunk for punct in [".", "?", "!", ","]):
+            
+                    if any(punct in text_chunk for punct in [".", "?", "!"]):
                         await self.process_tts(sentence_buffer.strip())
                         await self.broadcast_telemetry("", 0, token_count=token_count)
                         token_count = 0
                         sentence_buffer = ""
                         
+    
             if sentence_buffer and not self.interrupt_flag:
                 await self.process_tts(sentence_buffer.strip())
                 await self.broadcast_telemetry("", 0, token_count=token_count)
@@ -167,38 +172,57 @@ class VoiceSession:
         except asyncio.CancelledError:
             print("🛑 LLM Interrupted by Barge-in.")
 
-    async def process_tts(self, text: str):
-        global tts_pipeline, tts_lock
-        if not text or self.interrupt_flag: return
-        try:
-            tts_start = time.perf_counter()
-            def generate_audio():
-                return list(tts_pipeline(text, voice='af_heart', speed=1.1))
-            
-            async with tts_lock:
-                audio_chunks = await asyncio.to_thread(generate_audio)
-            
-            first_chunk_sent = False
-            for i, (gs, ps, audio_data) in enumerate(audio_chunks):
-                if self.interrupt_flag: break 
+    async def process_stt(self):
+        global llm_client
+        while self.is_running:
+            try:
+                chunk = await asyncio.wait_for(self.audio_queue.get(), timeout=0.8)
+                self.audio_buffer.extend(chunk)
                 
-                if isinstance(audio_data, torch.Tensor):
-                    audio_np = audio_data.detach().cpu().numpy()
-                else:
-                    audio_np = audio_data
+            except asyncio.TimeoutError:
+                if len(self.audio_buffer) >= 16000:
+                    try:
+                        self.total_e2e_start = time.perf_counter()
+                        stt_start = time.perf_counter()
+                        
+                        wav_io = io.BytesIO()
+                        with wave.open(wav_io, 'wb') as wav_file:
+                            wav_file.setnchannels(1)
+                            wav_file.setsampwidth(2)
+                            wav_file.setframerate(16000)
+                            wav_file.writeframes(self.audio_buffer)
+                        wav_io.seek(0)
+                        
+                        transcription = await llm_client.audio.transcriptions.create(
+                            file=("audio.wav", wav_io.read()),
+                            model="whisper-large-v3-turbo",
+                            response_format="text"
+                        )
+                        text = transcription.strip()
+                        
+                        stt_time_ms = (time.perf_counter() - stt_start) * 1000
+                        audio_duration_secs = len(self.audio_buffer) / 32000.0
+                        self.audio_buffer.clear()
+                        
+                        if text:
+                            print(f"🎙️ User: {text}")
+                            await self.ws.send_json({"type": "transcript", "text": text})
+                            await self.broadcast_telemetry("stt", stt_time_ms, audio_secs=audio_duration_secs)
+                            
+                            if self.llm_task and not self.llm_task.done():
+                                self.llm_task.cancel()
+                                
+                            self.interrupt_flag = False 
+                            
+                            self.llm_task = asyncio.create_task(self.process_llm(text))
+                            
+                    except Exception as e:
+                        print(f"❌ STT Error: {e}")
+                        self.audio_buffer.clear()
 
-                if not first_chunk_sent:
-                    await self.broadcast_telemetry("tts", (time.perf_counter() - tts_start) * 1000, char_count=len(text))
-                    await self.broadcast_telemetry("e2e", (time.perf_counter() - self.total_e2e_start) * 1000)
-                    first_chunk_sent = True
 
-                audio_int16 = (audio_np * 32767).astype(np.int16)
-                await self.ws.send_bytes(audio_int16.tobytes())
-                
-        except Exception as e:
-            print(f"❌ TTS Error: {e}")
 
-    async def start(self):
+async def start(self):
         asyncio.create_task(self.process_stt())
 
 @app.websocket("/ws/stream")
@@ -217,25 +241,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 data = json.loads(message["text"])
                 if data.get("type") == "interrupt":
                     session.interrupt_flag = True 
-                    session.audio_buffer.clear()
-                    if session.llm_task:
-                        session.llm_task.cancel()
-    except WebSocketDisconnect:
-        print("🔌 Client disconnected.")
-        session.is_running = False
-    await websocket.accept()
-    session = VoiceSession(websocket)
-    await session.start()
-    print("🔌 New client connected!")
-    
-    try:
-        while True:
-            message = await websocket.receive()
-            if "bytes" in message:
-                await session.audio_queue.put(message["bytes"])
-            elif "text" in message:
-                data = json.loads(message["text"])
-                if data.get("type") == "interrupt":
                     session.audio_buffer.clear()
                     if session.llm_task:
                         session.llm_task.cancel()
