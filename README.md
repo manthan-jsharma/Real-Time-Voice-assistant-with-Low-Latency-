@@ -1,5 +1,3 @@
----
-
 # 🎙️ Real-Time Voice AI System (Low Latency)
 
 A full-duplex, streaming voice assistant prototype designed for natural human-computer interaction. This system features an ultra-low latency pipeline converting Speech-to-Text (STT), generating AI responses (LLM), and synthesizing Text-to-Speech (TTS) in near real-time.
@@ -8,7 +6,7 @@ It includes advanced features like conversational fillers to mask latency, chunk
 
 Here is a look at the real-time voice assistant dashboard:
 
-[Voice AI Dashboard UI](./assets/stt2.png)
+![Voice AI Dashboard UI](./assets/stt2.png)
 
 ## 🚀 Key Features
 
