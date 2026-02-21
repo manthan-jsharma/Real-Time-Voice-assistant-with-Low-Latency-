@@ -6,7 +6,7 @@ It includes advanced features like conversational fillers to mask latency, chunk
 
 Here is a look at the real-time voice assistant dashboard:
 
-![Voice AI Dashboard UI](./assets/stt2.png)
+![Voice AI Dashboard UI](./assets/Dashboard-STT-TTS.png)
 
 ## 🚀 Key Features
 
