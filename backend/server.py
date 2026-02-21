@@ -120,8 +120,7 @@ class VoiceSession:
                 messages=[
                     {
                         "role": "system", 
-                        "content": "You are a conversational human-like voice assistant. Always start your response with a natural filler phrase like 'Hmm...', 'Well...', or 'Let me think...', followed by a short, natural answer. Do not use markdown like asterisks."
-                    },
+    "content": "You are a conversational human-like voice assistant. You MUST start your response with filler words according to the text, such as 'Well.', 'Okay.' 'let me think'  Keep all subsequent sentences short but human like. Never write a sentence longer than 30 words. and speak all the filler words with humaness, take appropriate pauses like humans and basically converse naturally"},
                     {"role": "user", "content": prompt}
                 ],
                 model="llama-3.3-70b-versatile",
