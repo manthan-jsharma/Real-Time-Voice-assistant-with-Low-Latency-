@@ -1,4 +1,3 @@
-Here is a complete, well-structured `README.md` document that fulfills all your evaluator's requirements. You can copy and paste this directly into your repository.
 
 ---
 
@@ -145,10 +144,10 @@ _Note: These metrics are tracked dynamically in the application UI. The followin
 
 | Processing Stage    | Target Latency | Description                                                                   |
 | ------------------- | -------------- | ----------------------------------------------------------------------------- |
-| **STT (Whisper)**   | ~300 - 400ms   | Time taken to transcribe the accumulated audio buffer via Groq API.           |
+| **STT (Whisper)**   | ~300 - 700ms   | Time taken to transcribe the accumulated audio buffer via Groq API.           |
 | **LLM TTFT**        | ~400 - 600ms   | Time to First Token (TTFT). Fast inference via Llama 3 on Groq.               |
-| **TTS First Chunk** | ~500 - 1500ms  | Time to synthesize the first sentence chunk via Kokoro (CPU bound).           |
-| **Total E2E**       | **< 2000ms**   | Total time from the user stopping speech to the first byte of audio playback. |
+| **TTS First Chunk** | ~500 - 10000ms  | Time to synthesize the first sentence chunk via Kokoro (CPU bound).           |
+| **Total E2E**       | **< 2000-2500ms**   | Total time from the user stopping speech to the first byte of audio playback. |
 
 _To further reduce perceived latency, the system immediately plays a synthesized filler word ("Hmm...") while the LLM generates the factual response, dropping perceived E2E latency to < 800ms._
 
