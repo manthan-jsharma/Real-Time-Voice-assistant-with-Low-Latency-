@@ -95,6 +95,14 @@ class VoiceSession:
                         stt_time_ms = (time.perf_counter() - stt_start) * 1000
                         audio_duration_secs = len(self.audio_buffer) / 32000.0
                         self.audio_buffer.clear()
+
+                        phantom_words = [
+                            "thank you.", "thank you", "yeah.", "yeah", 
+                            "you.", "you", "okay.", "okay", "thanks.", "thanks"
+                        ]
+                        if not text or text.lower() in phantom_words or len(text) < 3:
+                            print(f"👻 Ignored Whisper hallucination: '{text}'")
+                            continue
                         
                         if text:
                             print(f"🎙️ User: {text}")
@@ -117,10 +125,18 @@ class VoiceSession:
         try:
             llm_start = time.perf_counter()
             stream = await llm_client.chat.completions.create(
-                messages=[
+            messages=[
                     {
                         "role": "system", 
-    "content": "You are a conversational human-like voice assistant. You MUST start your response with filler words according to the text, such as 'Well.', 'Okay.' 'let me think'  Keep all subsequent sentences short but human like. Never write a sentence longer than 30 words. and speak all the filler words with humaness, take appropriate pauses like humans and basically converse naturally"},
+                        "content": (
+                            "You are a highly intelligent, conversational voice assistant. Your output is being converted directly to audio. "
+                            "Follow these strict rules:\n"
+                            "1. LATENCY TRICK: Always start your response with a natural 1-to-3 word acknowledgment ending in a period (e.g., 'Hmm.', 'Sure.', 'Let me think.', 'Got it.'). This must be its own complete sentence.\n"
+                            "2. BE DIRECT: Address the user's specific intent immediately in the next sentence. Be highly accurate but concise.\n"
+                            "3. TTS OPTIMIZED: Keep all sentences under 30-50 words. NEVER use emojis, asterisks, dashes, or ellipses (...). Only use standard periods (.), commas (,), and question marks (?) to ensure smooth audio generation."
+                            "4. HUMAN Like: keep the senteces humans like, pause between your sentences and intent and make conversation feel human"
+                        )
+                    },
                     {"role": "user", "content": prompt}
                 ],
                 model="llama-3.3-70b-versatile",
