@@ -60,6 +60,10 @@ export default function ProductionVoiceAI() {
   };
 
   const playRawAudio = async (arrayBuffer: ArrayBuffer) => {
+    if (statusRef.current !== "speaking") {
+      return;
+    }
+
     if (!audioCtxRef.current) {
       const AudioContextClass =
         window.AudioContext || (window as any).webkitAudioContext;
@@ -86,7 +90,6 @@ export default function ProductionVoiceAI() {
     source.start(nextPlayTimeRef.current);
     nextPlayTimeRef.current += audioBuffer.duration;
   };
-
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectTimeout: NodeJS.Timeout;
